@@ -339,12 +339,15 @@ class Worker:
             validated = ValidatedFunction(
                 task_function, config=_TaskFuncArgumentValidationConfig
             )
+            _log.debug(f"validated function: {validated}")
 
             # This does the model validation part.
             model = validated.init_model_instance(context, *req.args, **req.kwargs)
+            _log.debug(f"model from init_model_instance is: {model}")
 
             if inspect.iscoroutinefunction(task_function):
                 fut = validated.execute(model)
+                _log.debug(f"model execute result is: {fut}")
             else:
                 _log.debug(
                     "Handler for task %r is not a coroutine function, running in the loop's default executor",
@@ -355,6 +358,7 @@ class Worker:
                 # This allows them to run without blocking the event loop
                 # (providing the GIL does not block it either)
                 fut = self.app.loop.run_in_executor(None, validated.execute, model)
+                _log.debug(f"model execute result is: {fut}")
 
         except ValidationError as exc:
             _log.error(
